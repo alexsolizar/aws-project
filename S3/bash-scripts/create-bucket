@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Check if the required arguments are provided
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <bucket_name> <region> <num_files>"
+    exit 1
+fi
+
+# Parameters
+BUCKET_NAME=$1      # Bucket name from command line
+REGION=$2           # AWS region from command line
+NUM_FILES=$3        # Number of files to generate from command line
+FILE_PREFIX="random_file"  # Prefix for the file names
+
+# Create S3 bucket
+aws s3 mb "s3://$BUCKET_NAME" --region $REGION
+
+# Generate and upload random text files
+for i in $(seq 1 $NUM_FILES); do
+  # Generate random content
+  RANDOM_CONTENT=$(openssl rand -base64 32)
+  
+  # Create a file with random content
+  FILE_NAME="${FILE_PREFIX}_$i.txt"
+  echo "$RANDOM_CONTENT" > "$FILE_NAME"
+  
+  # Upload the file to the S3 bucket
+  aws s3 cp "$FILE_NAME" "s3://$BUCKET_NAME/"
+  
+  # Remove the local file after upload
+  rm "$FILE_NAME"
+  
+  echo "Uploaded $FILE_NAME to s3://$BUCKET_NAME/"
+done
+
+echo "Bucket $BUCKET_NAME created and populated with $NUM_FILES random text files."
